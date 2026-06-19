@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administração da Agenda Escolar 2026</title>
+    <script src="https://cdn.jsdelivr.net/npm/appwrite@13.0.0"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="toast-container" id="toastContainer"></div>
+    <div class="container">
+        <nav class="page-nav">
+            <a href="agenda-escolar-2026.html">Visualização pública</a>
+            <span>Administração</span>
+        </nav>
+        <div class="header">
+            <div class="banner-content">
+                <div class="banner-title">
+                    <h1>ADMINISTRAÇÃO DA AGENDA ESCOLAR 2026</h1>
+                </div>
+                <div class="banner-bottom">
+                    <div class="contact-info">
+                        <p>Área de criação, edição e exclusão de eventos para o calendário escolar.</p>
+                        <p>Para adicionar ou alterar informações, faça login com seu usuário Appwrite.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="auth-panel" id="authPanel">
+            <h2>Login de administrador</h2>
+            <form id="loginForm" class="auth-form">
+                <div class="form-group">
+                    <label for="emailInput">E-mail</label>
+                    <input id="emailInput" type="email" placeholder="seu@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="passwordInput">Senha</label>
+                    <input id="passwordInput" type="password" placeholder="Senha" required>
+                </div>
+                <button type="submit" class="auth-button">Entrar</button>
+            </form>
+            <p class="admin-message">Somente usuários autenticados com permissão Appwrite podem inserir, atualizar ou excluir eventos.</p>
+        </div>
+
+        <div class="admin-status hidden" id="adminStatus">
+            <div class="status-info">
+                <p>Conectado como <strong id="userEmail"></strong></p>
+            </div>
+            <button id="signOutBtn" class="btn btn-primary">Sair</button>
+        </div>
+
+        <div class="controls">
+            <div class="month-selector">
+                <label for="monthSelect">Mês:</label>
+                <select id="monthSelect">
+                    <option value="0">Janeiro</option>
+                    <option value="1">Fevereiro</option>
+                    <option value="2">Março</option>
+                    <option value="3">Abril</option>
+                    <option value="4">Maio</option>
+                    <option value="5">Junho</option>
+                    <option value="6">Julho</option>
+                    <option value="7">Agosto</option>
+                    <option value="8">Setembro</option>
+                    <option value="9">Outubro</option>
+                    <option value="10">Novembro</option>
+                    <option value="11">Dezembro</option>
+                </select>
+            </div>
+            <button id="todayButton" class="btn btn-primary">Hoje</button>
+        </div>
+
+        <div class="calendar-container">
+            <div class="calendar">
+                <div class="calendar-header" id="calendarHeader">Janeiro 2026</div>
+                <div class="calendar-grid" id="calendarGrid"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="calendar-data.js"></script>
+    <script src="script-admin.js"></script>
+</body>
+</html>

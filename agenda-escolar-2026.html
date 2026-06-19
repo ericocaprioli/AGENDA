@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda Escolar 2026 - Colégio Estadual Profª Hercília F do Nascimento</title>
+    <script src="https://cdn.jsdelivr.net/npm/appwrite@13.0.0"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="toast-container" id="toastContainer"></div>
+    <div class="container">
+        <nav class="page-nav">
+            <a href="agenda-admin.html">Área administrativa</a>
+            <a href="agenda-escolar-2026.html">Visualização pública</a>
+        </nav>
+        <div class="header">
+            <div class="banner-content">
+                <div class="banner-top">
+                    <div class="banner-left">
+                        <div class="school-info">
+                            <h3>COLÉGIO ESTADUAL PROFª HERCÍLIA F DO NASCIMENTO -EFMP</h3>
+                            <p>Mangueirinha - PR</p>
+                        </div>
+                    </div>
+                    <div class="banner-right">
+                        <div class="parana-logo">
+                            <span>PARANÁ INTEGRAL</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="banner-title">
+                    <h1>AGENDA ESCOLAR 2026</h1>
+                </div>
+                <div class="banner-bottom">
+                    <div class="contact-info">
+                        <p><strong>Telefone:</strong> (46)3243-1271</p>
+                        <p><strong>E-mail:</strong> mulhercilianascimento@seed.pr.gov.br</p>
+                        <p><strong>Endereço:</strong> Rua Governador Garcés, nº 674, Bairro Vila Verde, 85540-046 - Mangueirinha - PR</p>
+                        <div class="classes-inline">
+                            <span class="class-tag" style="background-color: #FF5733; color: white;">6A - AMÉRICA</span>
+                            <span class="class-tag" style="background-color: #33FF57; color: #000;">6B - SAPIENS</span>
+                            <span class="class-tag" style="background-color: #3357FF; color: white;">7A - GRÉCIA</span>
+                            <span class="class-tag" style="background-color: #F333FF; color: white;">7B - HOMO</span>
+                            <span class="class-tag" style="background-color: #FFD700; color: #000;">8A - FATORIAL</span>
+                            <span class="class-tag" style="background-color: #00FFFF; color: #000;">8B - HQ</span>
+                            <span class="class-tag" style="background-color: #FF8C00; color: white;">9A - PI</span>
+                            <span class="class-tag" style="background-color: #ADFF2F; color: #000;">9B - HP</span>
+                            <span class="class-tag" style="background-color: #FF1493; color: white;">1A - AGRO</span>
+                            <span class="class-tag" style="background-color: #00FA9A; color: #000;">2A - HK</span>
+                            <span class="class-tag" style="background-color: #8A2BE2; color: white;">3A - HF</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="legend">
+            <h3>Legenda de Cores</h3>
+            <div class="legend-items">
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #ADD8E6;"></div>
+                    <span>Continuidade das férias ano letivo 2026</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #FFD700;"></div>
+                    <span>Início e término das aulas</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #4169E1;"></div>
+                    <span>Início e término de trimestre</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #228B22;"></div>
+                    <span>Estudo e Planejamento</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #2c3e50;"></div>
+                    <span>Plano de Abandono</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #DC143C;"></div>
+                    <span>Feriado</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #FF8C00;"></div>
+                    <span>Recesso escolar</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #bdc3c7;"></div>
+                    <span>Cons. Clas. Extraord. e Fech. do ano letivo</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #FFB6C1;"></div>
+                    <span>Início das férias ano letivo 2027</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #9370DB;"></div>
+                    <span>Conselho de Classe (Intermediário)</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="month-selector">
+                <label for="monthSelect">Mês:</label>
+                <select id="monthSelect">
+                    <option value="0">Janeiro</option>
+                    <option value="1">Fevereiro</option>
+                    <option value="2">Março</option>
+                    <option value="3">Abril</option>
+                    <option value="4">Maio</option>
+                    <option value="5">Junho</option>
+                    <option value="6">Julho</option>
+                    <option value="7">Agosto</option>
+                    <option value="8">Setembro</option>
+                    <option value="9">Outubro</option>
+                    <option value="10">Novembro</option>
+                    <option value="11">Dezembro</option>
+                </select>
+            </div>
+            <button class="btn btn-primary" onclick="goToToday()">Hoje</button>
+        </div>
+
+        <div class="calendar-container">
+            <div class="calendar">
+                <div class="calendar-header" id="calendarHeader">Janeiro 2026</div>
+                <div class="calendar-grid" id="calendarGrid">
+                    <!-- Calendar will be generated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="calendar-data.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
