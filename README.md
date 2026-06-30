@@ -21,7 +21,7 @@ Aplicativo web completo para gerenciamento e visualização do calendário escol
 - Lista de turmas com identificação visual
 
 ### Interface Administrativa
-- Autenticação segura via Appwrite
+- Autenticação segura via Supabase Authentication
 - Criação de eventos clicando em qualquer dia do calendário
 - Edição inline de eventos existentes
 - Exclusão de eventos
@@ -31,9 +31,11 @@ Aplicativo web completo para gerenciamento e visualização do calendário escol
 ## 🛠️ Tecnologias
 
 - **Frontend**: HTML5, CSS3, JavaScript (Vanilla)
-- **Backend**: Appwrite (BaaS)
-  - Autenticação de usuários
-  - Banco de dados NoSQL para eventos
+- **Backend**: Supabase
+  - PostgreSQL (Banco de dados relacional)
+  - Authentication (Autenticação de usuários)
+  - Plano gratuito: 500MB de banco de dados, 2GB transferência/mês, 50.000 requisições/mês
+  - 100% gratuito sem necessidade de cartão de crédito
 - **Hosting**: GitHub Pages
 
 ## 📦 Instalação
@@ -45,15 +47,47 @@ git clone https://github.com/ericocaprioli/AGENDA.git
 
 2. Abra o arquivo `agenda-escolar-2026.html` no navegador para visualização pública
 
-3. Para acesso administrativo, abra `agenda-admin.html` e faça login com credenciais Appwrite
+3. Para acesso administrativo, abra `agenda-admin.html` e faça login com credenciais Supabase
 
 ## 🔧 Configuração
 
-Para usar o sistema administrativo, configure o Appwrite:
+Para usar o sistema administrativo, configure o Supabase:
 
-1. Crie um projeto em [Appwrite](https://appwrite.io/)
-2. Configure as credenciais nos arquivos `script.js` e `script-admin.js`
-3. Crie um banco de dados e collection para eventos
+1. Crie um projeto em [Supabase](https://supabase.com/)
+2. Crie uma tabela chamada `eventos` no banco de dados com as colunas:
+   - `id` (bigint, primary key)
+   - `data` (text)
+   - `titulo` (text)
+   - `tipo` (text)
+   - `criadoEm` (timestamp)
+3. Ative o Authentication (Email/Password)
+4. Copie as credenciais do projeto (Project Settings → API)
+5. Substitua as credenciais no arquivo `supabase-config.js`
+6. Configure as RLS (Row Level Security) para permitir leitura pública e escrita autenticada
+
+**Política RLS sugerida:**
+```sql
+-- Habilitar RLS
+ALTER TABLE eventos ENABLE ROW LEVEL SECURITY;
+
+-- Política para leitura pública
+CREATE POLICY "Leitura pública para todos" 
+ON eventos FOR SELECT 
+USING (true);
+
+-- Política para escrita apenas autenticados
+CREATE POLICY "Escrita apenas para autenticados" 
+ON eventos FOR INSERT 
+WITH CHECK (auth.role() = 'authenticated');
+
+CREATE POLICY "Atualização apenas para autenticados" 
+ON eventos FOR UPDATE 
+USING (auth.role() = 'authenticated');
+
+CREATE POLICY "Exclusão apenas para autenticados" 
+ON eventos FOR DELETE 
+USING (auth.role() = 'authenticated');
+```
 
 ## 🎨 Tipos de Eventos
 

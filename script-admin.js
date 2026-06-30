@@ -8,15 +8,7 @@ let events = {};
 let loadToken = 0;
 let currentUser = null;
 
-const { Client, Databases, ID, Query, Account } = Appwrite;
-const client = new Client()
-    .setEndpoint('https://nyc.cloud.appwrite.io/v1')
-    .setProject('agenda-escolar-2026');
-const account = new Account(client);
-const databases = new Databases(client);
-
-const DATABASE_ID = '69f38f600004d1b7c5ce';
-const COLLECTION_ID = 'eventos';
+const COLLECTION_NAME = 'eventos';
 const PAGE_SIZE = 100;
 
 function showToast(message, type = 'error') {
@@ -54,91 +46,93 @@ function getMonthDateRange(year, month) {
     return { start, end };
 }
 
-async function loadEventsFromAppwrite(year, month) {
+async function loadEventsFromSupabase(year, month) {
     const { start, end } = getMonthDateRange(year, month);
-    const appwriteEvents = {};
-    let lastId = null;
-
+    const supabaseEvents = {};
+    
     try {
-        while (true) {
-            const queries = [
-                Query.greaterThanEqual('data', start),
-                Query.lessThan('data', end),
-                Query.orderAsc('data'),
-                Query.limit(PAGE_SIZE)
-            ];
-            if (lastId) {
-                queries.push(Query.cursorAfter(lastId));
+        const { data, error } = await supabase
+            .from(COLLECTION_NAME)
+            .select('*')
+            .gte('data', start)
+            .lt('data', end)
+            .order('data')
+            .limit(PAGE_SIZE);
+        
+        if (error) throw error;
+        
+        data.forEach(doc => {
+            const date = doc.data;
+            if (!supabaseEvents[date]) {
+                supabaseEvents[date] = [];
             }
-
-            const response = await databases.listDocuments(DATABASE_ID, COLLECTION_ID, queries);
-            response.documents.forEach(doc => {
-                const date = doc.data;
-                if (!appwriteEvents[date]) {
-                    appwriteEvents[date] = [];
-                }
-                appwriteEvents[date].push({
-                    id: doc.$id,
-                    title: doc.titulo,
-                    type: doc.tipo,
-                    created: doc.criadoEm
-                });
+            supabaseEvents[date].push({
+                id: doc.id,
+                title: doc.titulo,
+                type: doc.tipo,
+                created: doc.criadoEm
             });
-
-            if (response.documents.length < PAGE_SIZE) {
-                break;
-            }
-            lastId = response.documents[response.documents.length - 1].$id;
-        }
-
-        return appwriteEvents;
+        });
+        
+        return supabaseEvents;
     } catch (error) {
-        console.error('Erro ao carregar eventos do Appwrite:', error);
+        console.error('Erro ao carregar eventos do Supabase:', error);
         throw error;
     }
 }
 
-async function saveEventToAppwrite(date, title) {
+async function saveEventToSupabase(date, title) {
     const cleanTitle = String(title).trim().slice(0, MAX_TITLE_LENGTH);
     if (!cleanTitle) return null;
 
     try {
-        const response = await databases.createDocument(
-            DATABASE_ID,
-            COLLECTION_ID,
-            ID.unique(),
-            {
+        const { data, error } = await supabase
+            .from(COLLECTION_NAME)
+            .insert({
                 data: date,
                 titulo: cleanTitle,
-                tipo: 'cyan'
-            }
-        );
-        return response;
+                tipo: 'cyan',
+                criadoEm: new Date().toISOString()
+            })
+            .select();
+        
+        if (error) throw error;
+        return { $id: data[0].id };
     } catch (error) {
-        console.error('Erro ao salvar evento no Appwrite:', error);
+        console.error('Erro ao salvar evento no Supabase:', error);
         return null;
     }
 }
 
-async function updateEventInAppwrite(eventId, title) {
+async function updateEventInSupabase(eventId, title) {
     const cleanTitle = String(title).trim().slice(0, MAX_TITLE_LENGTH);
     if (!cleanTitle) return false;
 
     try {
-        await databases.updateDocument(DATABASE_ID, COLLECTION_ID, eventId, { titulo: cleanTitle });
+        const { error } = await supabase
+            .from(COLLECTION_NAME)
+            .update({ titulo: cleanTitle })
+            .eq('id', eventId);
+        
+        if (error) throw error;
         return true;
     } catch (error) {
-        console.error('Erro ao atualizar evento no Appwrite:', error);
+        console.error('Erro ao atualizar evento no Supabase:', error);
         return false;
     }
 }
 
-async function deleteEventFromAppwrite(eventId) {
+async function deleteEventFromSupabase(eventId) {
     try {
-        await databases.deleteDocument(DATABASE_ID, COLLECTION_ID, eventId);
+        const { error } = await supabase
+            .from(COLLECTION_NAME)
+            .delete()
+            .eq('id', eventId);
+        
+        if (error) throw error;
         return true;
     } catch (error) {
-        console.error('Erro ao deletar evento do Appwrite:', error);
+        console.error('Erro ao deletar evento do Supabase:', error);
         return false;
     }
 }
@@ -148,7 +142,7 @@ async function loadMonthEvents(year, month) {
     setLoadingState(true);
 
     try {
-        const monthEvents = await loadEventsFromAppwrite(year, month);
+        const monthEvents = await loadEventsFromSupabase(year, month);
         if (myToken !== loadToken) return;
         events = monthEvents;
     } catch (error) {
@@ -184,7 +178,8 @@ function updateAuthUI() {
 
 async function restoreSession() {
     try {
-        currentUser = await account.get();
+        const { data: { session } } = await supabase.auth.getSession();
+        currentUser = session?.user || null;
     } catch (error) {
         currentUser = null;
     }
@@ -202,8 +197,14 @@ async function handleLogin(event) {
     }
 
     try {
-        await account.createEmailSession(email, password);
-        currentUser = await account.get();
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
+        
+        if (error) throw error;
+        
+        currentUser = data.user;
         updateAuthUI();
         showToast('Login realizado com sucesso.', 'success');
         await loadMonthEvents(currentYear, currentMonth);
@@ -215,7 +216,7 @@ async function handleLogin(event) {
 
 async function handleSignOut() {
     try {
-        await account.deleteSession('current');
+        await supabase.auth.signOut();
     } catch (error) {
         console.warn('Falha ao encerrar sessão:', error);
     }
@@ -379,7 +380,7 @@ function addNewMeetingInline(dateStr, dayElement) {
                 return;
             }
             events[dateStr][newIndex].title = value;
-            const response = await saveEventToAppwrite(dateStr, value);
+            const response = await saveEventToSupabase(dateStr, value);
             if (response) {
                 events[dateStr][newIndex].id = response.$id;
                 showToast('Evento salvo.', 'success');
@@ -448,7 +449,7 @@ async function editMeetingInline(meetingItem, dateStr, index) {
             }
             events[dateStr][index].title = value;
             if (events[dateStr][index].id) {
-                const ok = await updateEventInAppwrite(events[dateStr][index].id, value);
+                const ok = await updateEventInSupabase(events[dateStr][index].id, value);
                 if (!ok) {
                     showToast('Não foi possível atualizar o evento.');
                 }
@@ -473,7 +474,7 @@ async function deleteMeeting(dateStr, index) {
 
     const meeting = events[dateStr][index];
     if (meeting.id) {
-        const ok = await deleteEventFromAppwrite(meeting.id);
+        const ok = await deleteEventFromSupabase(meeting.id);
         if (!ok) {
             showToast('Não foi possível remover o evento do servidor.');
             return;

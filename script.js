@@ -5,6 +5,7 @@ let loadToken = 0;
 const monthNames = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const weekDays = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 const PAGE_SIZE = 100;
+const COLLECTION_NAME = 'eventos';
 
 function showToast(message, type = 'error') {
     const container = document.getElementById('toastContainer');
@@ -37,42 +38,37 @@ function getMonthDateRange(year, month) {
     return { start, end };
 }
 
-async function loadEventsFromAppwrite(year, month) {
+async function loadEventsFromSupabase(year, month) {
     const { start, end } = getMonthDateRange(year, month);
-    const appwriteEvents = {};
-    let lastId = null;
+    const supabaseEvents = {};
+    
     try {
-        while (true) {
-            const queries = [
-                Query.greaterThanEqual('data', start),
-                Query.lessThan('data', end),
-                Query.orderAsc('data'),
-                Query.limit(PAGE_SIZE)
-            ];
-            if (lastId) {
-                queries.push(Query.cursorAfter(lastId));
+        const { data, error } = await supabase
+            .from(COLLECTION_NAME)
+            .select('*')
+            .gte('data', start)
+            .lt('data', end)
+            .order('data')
+            .limit(PAGE_SIZE);
+        
+        if (error) throw error;
+        
+        data.forEach(doc => {
+            const date = doc.data;
+            if (!supabaseEvents[date]) {
+                supabaseEvents[date] = [];
             }
-            const response = await databases.listDocuments(DATABASE_ID, COLLECTION_ID, queries);
-            response.documents.forEach(doc => {
-                const date = doc.data;
-                if (!appwriteEvents[date]) {
-                    appwriteEvents[date] = [];
-                }
-                appwriteEvents[date].push({
-                    id: doc.$id,
-                    title: doc.titulo,
-                    type: doc.tipo,
-                    created: doc.criadoEm
-                });
+            supabaseEvents[date].push({
+                id: doc.id,
+                title: doc.titulo,
+                type: doc.tipo,
+                created: doc.criadoEm
             });
-            if (response.documents.length < PAGE_SIZE) {
-                break;
-            }
-            lastId = response.documents[response.documents.length - 1].$id;
-        }
-        return appwriteEvents;
+        });
+        
+        return supabaseEvents;
     } catch (error) {
-        console.error('Erro ao carregar eventos do Appwrite:', error);
+        console.error('Erro ao carregar eventos do Supabase:', error);
         throw error;
     }
 }
@@ -81,7 +77,7 @@ async function loadMonthEvents(year, month) {
     const myToken = ++loadToken;
     setLoadingState(true);
     try {
-        const monthEvents = await loadEventsFromAppwrite(year, month);
+        const monthEvents = await loadEventsFromSupabase(year, month);
         if (myToken !== loadToken) return;
         events = monthEvents;
     } catch (error) {
@@ -188,11 +184,3 @@ async function initCalendar() {
 }
 
 document.addEventListener('DOMContentLoaded', initCalendar);
-
-const { Client, Databases, Query } = Appwrite;
-const client = new Client()
-    .setEndpoint('https://nyc.cloud.appwrite.io/v1')
-    .setProject('agenda-escolar-2026');
-const databases = new Databases(client);
-const DATABASE_ID = '69f38f600004d1b7c5ce';
-const COLLECTION_ID = 'eventos';
